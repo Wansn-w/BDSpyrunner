@@ -1,0 +1,43 @@
+name: 构建dll
+
+on: [push]
+
+env:
+  SOLUTION_FILE_PATH: .
+  Platform: X64
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: 配置MS Build
+      uses: microsoft/setup-msbuild@v1
+
+    - name: 还原NuGet包
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: 构建
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild ./BDSpyrunner.sln -property:Configuration=Release
+
+    - name: 新建输出文件夹
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        mkdir D:/out
+
+    - name: 复制输出内容
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        cp -a D:/a/BDSpyrunner/test/bdxcore_mod/*.dll D:/out
+      shell: bash
+
+    - name: 上传生成物
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: BDSpyrunner
+        path: D:/out
